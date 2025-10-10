@@ -19,6 +19,10 @@ transformers>=4.30.0
 pathlib2>=2.3.0
 typing-extensions>=4.0.0
 
+# AI Integration (Optional)
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+
 # Optional: For better performance
 # accelerate>=0.20.0
 # safetensors>=0.3.0

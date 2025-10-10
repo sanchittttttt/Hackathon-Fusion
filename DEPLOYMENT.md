@@ -41,6 +41,16 @@ For sensitive data, use Streamlit's secrets management:
 2. Add your secrets there
 3. Access them in your app with `st.secrets["key"]`
 
+#### Gemini AI Integration (Optional)
+To enable AI-powered molecular insights:
+1. Get a Google AI API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add it to your Streamlit Cloud secrets:
+   ```toml
+   [api_keys]
+   gemini_api_key = "your_api_key_here"
+   ```
+3. The app will work without it, but AI insights will be disabled
+
 ### 4. Model File Considerations
 
 **Important**: The model file (`binding_model.pt`) is large and may cause deployment issues:

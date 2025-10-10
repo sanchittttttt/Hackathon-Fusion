@@ -18,7 +18,22 @@ warnings.filterwarnings("ignore", message=".*Use config instead to specify Plotl
 
 
 from predict import run_pipeline
-from gemini_insights import GeminiMolecularInsights, display_gemini_insights
+
+# Try to import Gemini insights, but handle gracefully if not available
+try:
+    from gemini_insights import GeminiMolecularInsights, display_gemini_insights
+    GEMINI_INSIGHTS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Gemini insights not available: {e}")
+    GEMINI_INSIGHTS_AVAILABLE = False
+    
+    # Create dummy functions for when Gemini is not available
+    class GeminiMolecularInsights:
+        def __init__(self, *args, **kwargs):
+            raise ImportError("Gemini insights not available")
+    
+    def display_gemini_insights(insights_list):
+        st.warning("Gemini AI insights are not available. Please install google-generativeai to enable this feature.")
 
 
 # Page configuration
@@ -891,46 +906,49 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                 num_molecules = 0
             
             if num_molecules > 0 and st.button("✨ Generate AI Insights with Molecular Images", type="primary", use_container_width=True):
-                with st.spinner(f"🤖 Generating AI insights for top {num_molecules} molecules... (30-60 seconds)"):
-                    try:
-                        # Initialize Gemini client
-                        gemini_client = GeminiMolecularInsights()
-                        insights_list = []
+                if not GEMINI_INSIGHTS_AVAILABLE:
+                    st.error("❌ Gemini AI insights are not available. Please install google-generativeai to enable this feature.")
+                else:
+                    with st.spinner(f"🤖 Generating AI insights for top {num_molecules} molecules... (30-60 seconds)"):
+                        try:
+                            # Initialize Gemini client
+                            gemini_client = GeminiMolecularInsights()
+                            insights_list = []
                         
-                        progress_bar = st.progress(0)
-                        status_text = st.empty()
-                        
-                        for i, selected_mol in enumerate(selected_molecules):
-                            status_text.text(f"Analyzing molecule {i + 1}/{num_molecules}...")
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
                             
-                            # Get the full row data for the selected molecule
-                            row = df.iloc[selected_mol['index']]
+                            for i, selected_mol in enumerate(selected_molecules):
+                                status_text.text(f"Analyzing molecule {i + 1}/{num_molecules}...")
+                                
+                                # Get the full row data for the selected molecule
+                                row = df.iloc[selected_mol['index']]
+                                
+                                insights = gemini_client.generate_molecular_insights(
+                                    smiles=selected_mol['smiles'],
+                                    protein_target=row.get('protein', 'Unknown'),
+                                    binding_pkd=selected_mol['pkd'],
+                                    phase1_score=selected_mol['phase1'],
+                                    confidence=selected_mol['confidence'],
+                                    kd_nm=row['Kd_nM'],
+                                    delta_g=row['DeltaG_kcal_mol']
+                                )
+                                insights['smiles'] = selected_mol['smiles']
+                                insights['rank'] = selected_mol['rank']
+                                insights['pKd'] = selected_mol['pkd']
+                                insights['confidence'] = selected_mol['confidence']
+                                insights_list.append(insights)
+                                
+                                progress_bar.progress((i + 1) / num_molecules)
                             
-                            insights = gemini_client.generate_molecular_insights(
-                                smiles=selected_mol['smiles'],
-                                protein_target=row.get('protein', 'Unknown'),
-                                binding_pkd=selected_mol['pkd'],
-                                phase1_score=selected_mol['phase1'],
-                                confidence=selected_mol['confidence'],
-                                kd_nm=row['Kd_nM'],
-                                delta_g=row['DeltaG_kcal_mol']
-                            )
-                            insights['smiles'] = selected_mol['smiles']
-                            insights['rank'] = selected_mol['rank']
-                            insights['pKd'] = selected_mol['pkd']
-                            insights['confidence'] = selected_mol['confidence']
-                            insights_list.append(insights)
+                            status_text.empty()
+                            st.session_state.gemini_insights = insights_list
+                            st.success(f"✅ Successfully generated AI insights for {len(insights_list)} molecules!")
                             
-                            progress_bar.progress((i + 1) / num_molecules)
-                        
-                        status_text.empty()
-                        st.session_state.gemini_insights = insights_list
-                        st.success(f"✅ Successfully generated AI insights for {len(insights_list)} molecules!")
-                        
-                    except ValueError as e:
-                        st.error(f"⚠️ Configuration Error: {e}\n\nPlease ensure GEMINI_API_KEY is set in your .env file.")
-                    except Exception as e:
-                        st.error(f"❌ Failed to generate insights: {e}")
+                        except ValueError as e:
+                            st.error(f"⚠️ Configuration Error: {e}\n\nPlease ensure GEMINI_API_KEY is set in your .env file.")
+                        except Exception as e:
+                            st.error(f"❌ Failed to generate insights: {e}")
             
             # Display stored insights with molecule images
             if 'gemini_insights' in st.session_state:
