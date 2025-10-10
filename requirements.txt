@@ -1,0 +1,25 @@
+# Core ML and Data Science
+torch>=2.0.0
+numpy>=1.23.0
+pandas>=1.4.0
+scikit-learn>=1.0.0
+matplotlib>=3.5.0
+
+# Streamlit and Visualization
+streamlit>=1.28.0
+plotly>=5.0.0
+
+# Chemistry and Molecular Processing
+rdkit>=2023.3.0
+
+# Deep Learning and Transformers
+transformers>=4.30.0
+torch>=2.0.0
+
+# File Processing and Utilities
+pathlib2>=2.3.0
+typing-extensions>=4.0.0
+
+# Optional: For better performance
+# accelerate>=0.20.0
+# safetensors>=0.3.0
