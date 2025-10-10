@@ -11,7 +11,7 @@ from utils.interpretability import get_top_fingerprint_weights
 from utils.phase1_readiness import phase1_readiness_score
 from utils.molecular_highlight import highlight_important_substructures
 
-def predict_with_confidence_ranking(proteins, smiles, model_path="models/saved_models/binding_model.pt", n_samples=30):
+def predict_with_confidence_ranking(proteins, smiles, model_path="models/saved_models/binding_model_v2.pt", n_samples=30):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     protein_encoder = ProteinEncoder()

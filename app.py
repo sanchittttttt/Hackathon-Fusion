@@ -8,13 +8,18 @@ import io
 import json
 import warnings
 from typing import List, Dict, Any
+from PIL import Image
+
 
 # Suppress Plotly deprecation warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="plotly")
 warnings.filterwarnings("ignore", message=".*keyword arguments have been deprecated.*")
 warnings.filterwarnings("ignore", message=".*Use config instead to specify Plotly configuration options.*")
 
+
 from predict import run_pipeline
+from gemini_insights import GeminiMolecularInsights, display_gemini_insights
+
 
 # Page configuration
 st.set_page_config(
@@ -23,6 +28,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 
 # Custom CSS for styling
 st.markdown("""
@@ -130,6 +136,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
 def parse_fasta_sequences(fasta_text: str) -> List[str]:
     """Parse FASTA sequences from text input."""
     if not fasta_text.strip():
@@ -152,6 +159,7 @@ def parse_fasta_sequences(fasta_text: str) -> List[str]:
     
     return sequences
 
+
 def parse_smiles_list(smiles_text: str) -> List[str]:
     """Parse SMILES strings from text input."""
     if not smiles_text.strip():
@@ -160,6 +168,7 @@ def parse_smiles_list(smiles_text: str) -> List[str]:
     # Split by lines and clean up
     smiles_list = [s.strip() for s in smiles_text.strip().split('\n') if s.strip()]
     return smiles_list
+
 
 def validate_smiles(smiles: str) -> bool:
     """Basic SMILES validation."""
@@ -170,6 +179,7 @@ def validate_smiles(smiles: str) -> bool:
     except:
         return False
 
+
 def create_feature_chips():
     """Create feature highlight chips."""
     st.markdown("""
@@ -178,8 +188,10 @@ def create_feature_chips():
         <span class="feature-chip chip-teal">🧪 Industry Metrics: Kd, ΔG, IC50</span>
         <span class="feature-chip chip-purple">🏆 Interactive Ranking</span>
         <span class="feature-chip chip-teal">🚀 Phase 1 Readiness</span>
+        <span class="feature-chip chip-purple">🤖 AI Insights</span>
     </div>
     """, unsafe_allow_html=True)
+
 
 def display_metrics_summary(metrics: Dict[str, Any]):
     """Display summary metrics as cards."""
@@ -217,6 +229,7 @@ def display_metrics_summary(metrics: Dict[str, Any]):
         </div>
         """, unsafe_allow_html=True)
 
+
 @st.cache_data
 def run_cached_pipeline(proteins: List[str], smiles: List[str], n_samples: int, 
                        top_k: int, make_highlights: bool, model_path: str) -> Dict:
@@ -230,6 +243,23 @@ def run_cached_pipeline(proteins: List[str], smiles: List[str], n_samples: int,
         make_highlights=make_highlights
     )
 
+
+def generate_molecule_image(smiles: str) -> str:
+    """Generate 2D image of molecule from SMILES."""
+    try:
+        from rdkit import Chem
+        from rdkit.Chem import Draw
+        import io
+        
+        mol = Chem.MolFromSmiles(smiles)
+        if mol:
+            img = Draw.MolToImage(mol, size=(300, 300))
+            return img
+        return None
+    except:
+        return None
+
+
 def main():
     # Header
     st.markdown("""
@@ -242,10 +272,56 @@ def main():
     # Feature chips
     create_feature_chips()
     
-    # Main tabs
-    tab1, tab2, tab3 = st.tabs(["Testing", "Detailed Overview", "About"])
+    # Main tabs - REORGANIZED ORDER
+    tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🧪 Testing", "📊 Detailed Overview", "🤖 AI Mode"])
     
+    # TAB 1: HOME (About)
     with tab1:
+        st.markdown("### About Synapse.AI")
+        
+        st.markdown("""
+        **Synapse.AI** is an advanced AI-powered platform for drug discovery and molecule-protein binding prediction.
+        
+        #### Key Features
+        - **Fast Prediction**: Get binding affinity predictions in seconds
+        - **Industry Metrics**: Kd, Ki, IC50, EC50, and ΔG calculations
+        - **Uncertainty Quantification**: Monte Carlo dropout for confidence estimation
+        - **Phase 1 Readiness**: AI-powered drug development scoring
+        - **Interactive Visualization**: Substructure highlighting and fingerprint analysis
+        - **AI Insights**: Gemini-powered molecular analysis with medical applications
+        
+        #### Model Performance
+        """)
+        
+        # Static metrics display
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Model Accuracy (AUROC)", "0.87", "+0.02")
+        with col2:
+            st.metric("Avg. Prediction Time", "0.31s/molecule", "-0.05s")
+        with col3:
+            st.metric("Molecules Analyzed", "15,230", "+1,247")
+        
+        st.markdown("""
+        #### Technology Stack
+        - **Deep Learning**: PyTorch-based neural networks
+        - **Molecular Encoding**: Morgan fingerprints with RDKit
+        - **Protein Encoding**: ESM2 transformer-based sequence embeddings
+        - **Uncertainty Estimation**: Monte Carlo dropout sampling
+        - **AI Insights**: Google Gemini 2.0 Flash for molecular analysis
+        
+        #### How to Use
+        1. **Testing Tab**: Input proteins and molecules to get binding predictions
+        2. **Detailed Overview**: Visualize results with interactive charts
+        3. **AI Mode**: Get AI-powered insights about your top drug candidates
+        
+        #### Contact & Support
+        For questions or support, please contact our team or visit our documentation.
+        """)
+    
+    # TAB 2: TESTING
+    with tab2:
         st.markdown("### Input Data")
         
         # Input method selection
@@ -259,25 +335,66 @@ def main():
         smiles = []
         
         if input_method == "Text Input":
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("#### Protein FASTA Sequences")
-                fasta_text = st.text_area(
-                    "Enter protein sequences in FASTA format:",
-                    placeholder=">sp|P00533|EGFR_HUMAN\nMRPSGTAGAALLALLAALCPASRALEEKEGKLA...",
-                    height=150
-                )
-                proteins = parse_fasta_sequences(fasta_text)
-            
-            with col2:
-                st.markdown("#### Molecule SMILES")
-                smiles_text = st.text_area(
-                    "Enter SMILES strings (one per line):",
-                    placeholder="CCO\nCC(=O)OC1=CC=CC=C1C(=O)O\nC1CCCCC1",
-                    height=150
-                )
-                smiles = parse_smiles_list(smiles_text)
+             col1, col2 = st.columns(2)
+             
+             with col1:
+                 st.markdown("#### Protein FASTA Sequences")
+                 st.markdown("*💡 Insert any one protein - the model will automatically test it against all molecules*")
+                 fasta_text = st.text_area(
+                     "Enter protein sequences in FASTA format:",
+                     placeholder=">sp|P00533|EGFR_HUMAN\nMRPSGTAGAALLALLAALCPASRALEEKEGKLA...",
+                     height=150
+                 )
+                 proteins = parse_fasta_sequences(fasta_text)
+                 
+                 # Demo data for proteins
+                 st.markdown("**🎯 Demo Data for Judging:**")
+                 demo_proteins = """>sp|P00533|EGFR_HUMAN
+MRPSGTAGAALLALLAALCPASRALEEKEGKLAKETLQALLNATFGVYVISTAMVLSQLTGATLILHL
+IHSNLKPEDVCTSGLYAVDALQHLYDFFRNRTALQEMIEQLKQLEEQVLESIVLVGSATFILLDIV
+VNKIVGNNCANPNAYEAGVELQTPDMAEYSFFTSVQYQVFKGSVTFTSEGGDTKKKKGLKADERP
+
+
+>sp|P00519|ABL1_HUMAN
+MGSKGGGGKKKASLSPGQAAVEFAKKCLVGGLQPSQFEREARIEEAQERVQGPKEQWNLVAVVGMG
+TRSRSRRWSPGSDIYKKTVQGDGGFKSETTKESKPANKVYTLSLKKGVLVSFGQGQKPVNTKTSPK
+
+
+>sp|P04626|ERBB2_HUMAN
+MKAIFTCLVGALAGLVLTSWGPPGSAAAQPTIPQLHAPVPAGQAQHHEQEVSRQPSWCFSYGLDD
+EHSMNQYNILSNDTAFYVNQKSITVIVCCEKTTLNQRGGLTLPVSRLSLAMTCWGGIKDJKGSAHF
+VRDAMLQYITSSQPFTAFRKILGSALQHQVPHIAIPQPITVQSVPLYKLDKKVITSQKSISLSFHS"""
+                 
+                 st.text_area(
+                     "Copy and paste this demo protein data:",
+                     value=demo_proteins,
+                     height=120,
+                     key="demo_proteins"
+                 )
+             
+             with col2:
+                 st.markdown("#### Molecule SMILES")
+                 smiles_text = st.text_area(
+                     "Enter SMILES strings (one per line):",
+                     placeholder="CCO\nCC(=O)OC1=CC=CC=C1C(=O)O\nC1CCCCC1",
+                     height=150
+                 )
+                 smiles = parse_smiles_list(smiles_text)
+                 
+                 # Demo data for molecules
+                 st.markdown("**🎯 Demo Data for Judging:**")
+                 demo_smiles = """CCO
+CC(=O)OC1=CC=CC=C1C(=O)O
+c1ccccc1
+CN1CCCC1C2=CN=CC=C2
+CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
+                 
+                 st.text_area(
+                     "Copy and paste this demo molecule data:",
+                     value=demo_smiles,
+                     height=120,
+                     key="demo_smiles"
+                 )
         
         else:  # CSV Upload
             uploaded_file = st.file_uploader(
@@ -312,11 +429,10 @@ def main():
             top_k = st.slider("Top K Fingerprint Bits", 5, 50, 20)
         
         # Additional options
-        col1, col2 = st.columns(2)
-        with col1:
-            make_highlights = st.checkbox("Generate Substructure Highlights", value=True)
-        with col2:
-            model_path = st.text_input("Model Path", value="models/saved_models/binding_model.pt")
+        make_highlights = st.checkbox("Generate Substructure Highlights", value=True)
+        
+        # Hidden model path (using default)
+        model_path = "models/saved_models/binding_model.pt"
         
         # Prediction button
         if st.button("🔬 Predict & Rank", type="primary"):
@@ -382,23 +498,23 @@ def main():
             df_filtered['Rank'] = range(1, len(df_filtered) + 1)
             
             # Reorder columns
-            columns_order = ['Rank', 'smiles', 'mean_pKd', 'confidence', 'Kd_nM', 
+            columns_order = ['Rank', 'smiles', 'mean_pKd', 'binding_probability', 'confidence', 'Kd_nM', 
                            'DeltaG_kcal_mol', 'phase1_readiness', 'protein']
             
             df_display = df_filtered[columns_order].copy()
             
             # Rename columns for display
-            df_display.columns = ['Rank', 'Molecule (SMILES)', 'pKd', 'Confidence', 
+            df_display.columns = ['Rank', 'Molecule (SMILES)', 'pKd', 'Binding Probability', 'Confidence', 
                                 'Kd (nM)', 'ΔG (kcal/mol)', 'Phase 1 Score', 'Protein']
             
             # Format numeric columns
             st.markdown("### Ranked Results")
             st.dataframe(
                 df_display,
-                width='stretch',
                 column_config={
                     "Rank": st.column_config.NumberColumn("Rank", width="small"),
                     "pKd": st.column_config.NumberColumn("pKd", format="%.2f"),
+                    "Binding Probability": st.column_config.NumberColumn("Binding Probability", format="%.3f"),
                     "Confidence": st.column_config.NumberColumn("Confidence", format="%.3f"),
                     "Kd (nM)": st.column_config.NumberColumn("Kd (nM)", format="%.1f"),
                     "ΔG (kcal/mol)": st.column_config.NumberColumn("ΔG (kcal/mol)", format="%.1f"),
@@ -427,51 +543,174 @@ def main():
                     mime="application/json"
                 )
     
-    with tab2:
+    # TAB 3: DETAILED OVERVIEW
+    with tab3:
         if 'results' in st.session_state:
             results = st.session_state.results
             
             # Fingerprint importance chart
-            st.markdown("### Top Fingerprint Bits")
+            st.markdown("### Top Important Molecular Fingerprint Bits")
             
-            fig = px.bar(
-                x=list(range(len(results['top_bits']))),
+            # Create visualization
+            fig = go.Figure()
+            
+            # Add bars with gradient coloring based on importance
+            colors = ['#6366F1' if score > np.percentile(results['top_scores'], 75) else 
+                     '#06B6D4' if score > np.percentile(results['top_scores'], 50) else 
+                     '#10B981' for score in results['top_scores']]
+            
+            fig.add_trace(go.Bar(
+                x=[f"Bit {bit}" for bit in results['top_bits']],
                 y=results['top_scores'],
-                title="Top Important Molecular Fingerprint Bits"
-            )
+                marker_color=colors,
+                marker_line_color='white',
+                marker_line_width=1,
+                text=[f"{score:.3f}" for score in results['top_scores']],
+                textposition='outside',
+                hovertemplate="<b>%{x}</b><br>" +
+                            "Importance Score: %{y:.3f}<br>" +
+                            "Bit Index: %{customdata}<extra></extra>",
+                customdata=results['top_bits']
+            ))
+            
             fig.update_layout(
-                xaxis_title="Fingerprint Bit Index",
-                yaxis_title="Importance Score",
-                showlegend=False
+                title="Molecular Fingerprint Bit Importance Analysis",
+                xaxis_title="Fingerprint Bits (Ranked by Importance)",
+                yaxis_title="Importance Score (Sum of Absolute Weights)",
+                showlegend=False,
+                height=500,
+                xaxis=dict(tickangle=45),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
+            
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+            
+            # Add interpretation
+            st.markdown("""
+            **📊 Interpretation:**
+            - **High Importance (Purple)**: Top 25% of bits - Critical molecular features for binding prediction
+            - **Medium Importance (Teal)**: Middle 50% of bits - Significant but less critical features  
+            - **Lower Importance (Green)**: Bottom 25% of bits - Supporting features with minimal impact
+            
+            These fingerprint bits represent specific molecular substructures that the AI model has learned are most important for predicting protein-molecule binding affinity.
+            """)
             
             # Comparison chart
             st.markdown("### Binding Analysis")
             
             df = results['results_df']
-            fig2 = px.scatter(
-                df,
-                x='binding_probability',
-                y='phase1_readiness',
-                size='confidence',
-                title="Binding Probability vs Phase 1 Readiness"
-            )
+            
+            # Create sophisticated scatter plot
+            fig2 = go.Figure()
+            
+            # Define color palette
+            colors = px.colors.qualitative.Set3[:len(df)]
+            
+            # Calculate dynamic ranges
+            x_min, x_max = df['binding_probability'].min(), df['binding_probability'].max()
+            y_min, y_max = df['phase1_readiness'].min(), df['phase1_readiness'].max()
+            
+            # Add padding
+            x_padding = (x_max - x_min) * 0.1 if x_max != x_min else 0.1
+            y_padding = (y_max - y_min) * 0.1 if y_max != y_min else 0.1
+            
+            x_range = [max(0, x_min - x_padding), min(1, x_max + x_padding)]
+            y_range = [max(0, y_min - y_padding), min(1, y_max + y_padding)]
+            
+            # Calculate marker size
+            data_spread = max(x_max - x_min, y_max - y_min)
+            base_size = max(12, min(25, 15 + data_spread * 50))
+            
+            # Add molecules as traces
+            for i, (_, row) in enumerate(df.iterrows()):
+                fig2.add_trace(go.Scatter(
+                    x=[row['binding_probability']],
+                    y=[row['phase1_readiness']],
+                    mode='markers+text',
+                    marker=dict(
+                        size=max(base_size, row['confidence'] * base_size * 1.5),
+                        color=colors[i % len(colors)],
+                        line=dict(width=3, color='white'),
+                        opacity=0.9
+                    ),
+                    text=[f"{i+1}"],
+                    textposition="middle center",
+                    textfont=dict(size=10, color="white", family="Arial Black"),
+                    name=f"Molecule {i+1}",
+                    showlegend=True,
+                    hovertemplate="<b>Molecule %{fullData.name}</b><br>" +
+                                "SMILES: %{customdata[0]}<br>" +
+                                "Binding Probability: %{x:.3f}<br>" +
+                                "Phase 1 Readiness: %{y:.3f}<br>" +
+                                "pKd: %{customdata[1]:.2f}<br>" +
+                                "Kd (nM): %{customdata[2]:.1f}<br>" +
+                                "Confidence: %{customdata[3]:.3f}<extra></extra>",
+                    customdata=[[row['smiles'][:40] + "..." if len(row['smiles']) > 40 else row['smiles'], 
+                               row['mean_pKd'], row['Kd_nM'], row['confidence']]]
+                ))
+            
             fig2.update_layout(
-                xaxis_title="Binding Probability",
-                yaxis_title="Phase 1 Readiness Score"
+                title="Drug Candidate Analysis: Binding vs Development Readiness",
+                xaxis_title="Binding Probability (Higher = Better Binding)",
+                yaxis_title="Phase 1 Readiness Score (Higher = More Drug-like)",
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.02,
+                    bgcolor="rgba(255,255,255,0.8)",
+                    bordercolor="gray",
+                    borderwidth=1
+                ),
+                height=700,
+                plot_bgcolor='rgba(248,250,252,0.8)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(
+                    range=x_range,
+                    showgrid=True,
+                    gridcolor='rgba(128,128,128,0.2)',
+                    zeroline=True,
+                    zerolinecolor='rgba(128,128,128,0.5)'
+                ),
+                yaxis=dict(
+                    range=y_range,
+                    showgrid=True,
+                    gridcolor='rgba(128,128,128,0.2)',
+                    zeroline=True,
+                    zerolinecolor='rgba(128,128,128,0.5)'
+                ),
+                margin=dict(l=60, r=150, t=80, b=60)
             )
-            # Add hover data using update_traces instead of hover_data parameter
-            fig2.update_traces(
-                hovertemplate="<b>%{text}</b><br>" +
-                            "Binding Probability: %{x:.3f}<br>" +
-                            "Phase 1 Readiness: %{y:.3f}<br>" +
-                            "pKd: %{customdata[0]:.2f}<br>" +
-                            "Kd (nM): %{customdata[1]:.1f}<extra></extra>",
-                text=df['smiles'],
-                customdata=df[['mean_pKd', 'Kd_nM']].values
-            )
-            st.plotly_chart(fig2, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
+            
+            # Add quadrant lines
+            if x_range[0] <= 0.5 <= x_range[1]:
+                fig2.add_vline(x=0.5, line_dash="dash", line_color="gray", opacity=0.7, line_width=2)
+            if y_range[0] <= 0.5 <= y_range[1]:
+                fig2.add_hline(y=0.5, line_dash="dash", line_color="gray", opacity=0.7, line_width=2)
+            
+            st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+            
+            # Add interpretation
+            st.markdown("""
+            **📊 Binding Analysis Interpretation:**
+            
+            **🎯 Quadrant Analysis:**
+            - **Top-Right (High Binding + High Readiness)**: 🏆 **Ideal Candidates** - Strong binding with good drug-like properties
+            - **Top-Left (Low Binding + High Readiness)**: 💊 **Drug-like but Weak Binding** - May need structural optimization
+            - **Bottom-Right (High Binding + Low Readiness)**: ⚗️ **Strong Binding but Poor Drug Properties** - May have toxicity/ADMET issues
+            - **Bottom-Left (Low Binding + Low Readiness)**: ❌ **Poor Candidates** - Weak binding and poor drug properties
+            
+            **🔍 Key Insights:**
+            - **Marker Size**: Represents prediction confidence (larger = more confident)
+            - **Binding Probability**: Likelihood of protein-molecule interaction (0-1 scale)
+            - **Phase 1 Readiness**: Composite score based on Lipinski's Rule of 5 and toxicity alerts
+            - **Color Coding**: Each molecule has a unique color for easy identification
+            
+            **💡 Optimization Strategy**: Focus on molecules in the top-right quadrant or those that can be optimized to move toward that region.
+            """)
             
             # Substructure highlights
             if results['highlight_paths'] and any(results['highlight_paths']):
@@ -488,56 +727,144 @@ def main():
                         else:
                             with cols[i % 3]:
                                 st.error(f"Highlight image not found for molecule {i+1}")
-            
-            # Future feature placeholder
-            st.markdown("---")
-            st.markdown("### Advanced Analysis")
-            
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                st.info("🔮 **Try Gemini Insights** - Coming Soon!")
-            with col2:
-                st.button("🚀 Enable Gemini", disabled=True, help="LLM integration planned for Round 2")
         
         else:
             st.info("Run a prediction in the Testing tab to see detailed analysis here.")
     
-    with tab3:
-        st.markdown("### About Synapse.AI")
+    # TAB 4: AI MODE (Gemini Insights with Molecule Images)
+    with tab4:
+        st.markdown("### 🤖 AI-Powered Molecular Insights")
         
-        st.markdown("""
-        **Synapse.AI** is an advanced AI-powered platform for drug discovery and molecule-protein binding prediction.
+        if 'results' not in st.session_state:
+            st.info("🔬 Run a prediction in the Testing tab first to analyze molecules with AI.")
+            st.markdown("""
+            **What you'll get in AI Mode:**
+            - 🧬 2D molecular structure visualizations
+            - 📊 Comprehensive molecular assessment
+            - 🏥 Medical applications and therapeutic areas
+            - ⚙️ Mechanism of action analysis
+            - 🔬 Drug-like properties evaluation
+            - 🚀 Development stage insights
+            - 🔄 Alternative applications for weak binders
+            """)
         
-        #### Key Features
-        - **Fast Prediction**: Get binding affinity predictions in seconds
-        - **Industry Metrics**: Kd, Ki, IC50, EC50, and ΔG calculations
-        - **Uncertainty Quantification**: Monte Carlo dropout for confidence estimation
-        - **Phase 1 Readiness**: AI-powered drug development scoring
-        - **Interactive Visualization**: Substructure highlighting and fingerprint analysis
-        
-        #### Model Performance
-        """)
-        
-        # Static metrics display
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Model Accuracy (AUROC)", "0.87", "0.02")
-        with col2:
-            st.metric("Avg. Prediction Time", "0.31s/molecule", "0.05s")
-        with col3:
-            st.metric("Molecules Analyzed", "15,230", "1,247")
-        
-        st.markdown("""
-        #### Technology Stack
-        - **Deep Learning**: PyTorch-based neural networks
-        - **Molecular Encoding**: Morgan fingerprints with RDKit
-        - **Protein Encoding**: Advanced sequence-based features
-        - **Uncertainty Estimation**: Monte Carlo dropout sampling
-        
-        #### Contact & Support
-        For questions or support, please contact our team or visit our documentation.
-        """)
+        else:
+            results = st.session_state.results
+            df = results['results_df'].copy()
+            df = df.sort_values('mean_pKd', ascending=False).reset_index(drop=True)
+            
+            st.markdown("""
+            **Get detailed AI analysis for your top drug candidates:**
+            - 🧬 View 2D molecular structures
+            - 📊 Expert assessment by Gemini AI
+            - 🏥 Medical applications & therapeutic potential
+            - ⚙️ Mechanism of action insights
+            - 🔬 Drug development recommendations
+            """)
+            
+            # Number of molecules to analyze
+            num_molecules = st.slider(
+                "Select number of top molecules to analyze:",
+                min_value=1,
+                max_value=min(10, len(df)),
+                value=min(3, len(df)),
+                help="AI will analyze the top N molecules ranked by binding affinity"
+            )
+            
+            if st.button("✨ Generate AI Insights with Molecular Images", type="primary", use_container_width=True):
+                with st.spinner(f"🤖 Generating AI insights for top {num_molecules} molecules... (30-60 seconds)"):
+                    try:
+                        # Initialize Gemini client
+                        gemini_client = GeminiMolecularInsights()
+                        insights_list = []
+                        
+                        progress_bar = st.progress(0)
+                        status_text = st.empty()
+                        
+                        for idx, row in df.head(num_molecules).iterrows():
+                            status_text.text(f"Analyzing molecule {idx + 1}/{num_molecules}...")
+                            
+                            insights = gemini_client.generate_molecular_insights(
+                                smiles=row['smiles'],
+                                protein_target=row.get('protein', 'Unknown'),
+                                binding_pkd=row['mean_pKd'],
+                                phase1_score=row['phase1_readiness'],
+                                confidence=row['confidence'],
+                                kd_nm=row['Kd_nM'],
+                                delta_g=row['DeltaG_kcal_mol']
+                            )
+                            insights['smiles'] = row['smiles']
+                            insights['rank'] = idx + 1
+                            insights['pKd'] = row['mean_pKd']
+                            insights['confidence'] = row['confidence']
+                            insights_list.append(insights)
+                            
+                            progress_bar.progress((idx + 1) / num_molecules)
+                        
+                        status_text.empty()
+                        st.session_state.gemini_insights = insights_list
+                        st.success(f"✅ Successfully generated AI insights for {len(insights_list)} molecules!")
+                        
+                    except ValueError as e:
+                        st.error(f"⚠️ Configuration Error: {e}\n\nPlease ensure GEMINI_API_KEY is set in your .env file.")
+                    except Exception as e:
+                        st.error(f"❌ Failed to generate insights: {e}")
+            
+            # Display stored insights with molecule images
+            if 'gemini_insights' in st.session_state:
+                st.markdown("---")
+                st.markdown("## 📋 AI-Generated Molecular Insights with Structures")
+                
+                for insight in st.session_state.gemini_insights:
+                    # Create container for each molecule
+                    with st.container():
+                        st.markdown(f"### 🧬 Molecule #{insight['rank']}")
+                        
+                        # Two columns: Image + Basic Info | AI Insights
+                        col_img, col_info = st.columns([1, 2])
+                        
+                        with col_img:
+                            # Generate and display molecule image
+                            mol_img = generate_molecule_image(insight['smiles'])
+                            if mol_img:
+                                st.image(mol_img, caption=f"Molecule #{insight['rank']}", use_column_width=True)
+                            else:
+                                st.warning("Could not generate molecule image")
+                            
+                            # Show SMILES
+                            st.code(insight['smiles'], language=None)
+                            
+                            # Show key metrics
+                            st.metric("pKd", f"{insight.get('pKd', 0):.2f}")
+                            st.metric("Confidence", f"{insight.get('confidence', 0):.3f}")
+                        
+                        with col_info:
+                            # Display AI insights
+                            if "error" not in insight:
+                                # Summary
+                                st.markdown("#### 📊 AI Summary")
+                                st.info(insight.get('summary', 'No summary available'))
+                                
+                                # Medical Applications
+                                st.markdown("#### 🏥 Medical Applications")
+                                st.markdown(insight.get('medical_applications', 'No applications identified'))
+                                
+                                # Mechanism
+                                with st.expander("⚙️ Mechanism of Action"):
+                                    st.markdown(insight.get('mechanism', 'No mechanism described'))
+                                
+                                # Properties
+                                with st.expander("🔬 Key Molecular Properties"):
+                                    st.markdown(insight.get('key_properties', 'No properties listed'))
+                                
+                                # Development Insights
+                                with st.expander("🚀 Development Insights"):
+                                    st.markdown(insight.get('development_insights', 'No insights available'))
+                            else:
+                                st.error(f"⚠️ Failed to generate insights: {insight['error']}")
+                        
+                        st.markdown("---")
+
 
 if __name__ == "__main__":
     main()
