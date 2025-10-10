@@ -1,5 +1,7 @@
 # 🧬 Synapse.AI - Drug Binding Prediction Dashboard
 
+Live Demo : https://synapse-ai-functional-bits.streamlit.app/
+
 A production-quality Streamlit dashboard for AI-powered drug discovery and molecule-protein binding prediction.
 
 ## 🚀 Features
