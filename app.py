@@ -322,79 +322,109 @@ def main():
     
     # TAB 2: TESTING
     with tab2:
-        st.markdown("### Input Data")
+        # Header with better spacing
+        st.markdown("## 🧪 Drug Binding Prediction Testing")
+        st.markdown("---")
         
-        # Input method selection
+        # Input method selection with better styling
+        st.markdown("### 📋 Input Method")
         input_method = st.radio(
-            "Choose input method:",
+            "Choose your input method:",
             ["Text Input", "CSV Upload"],
-            horizontal=True
+            horizontal=True,
+            help="Select how you want to provide your protein and molecule data"
         )
         
         proteins = []
         smiles = []
         
         if input_method == "Text Input":
-             col1, col2 = st.columns(2)
-             
-             with col1:
-                 st.markdown("#### Protein FASTA Sequences")
-                 st.markdown("*💡 Insert any one protein - the model will automatically test it against all molecules*")
-                 fasta_text = st.text_area(
-                     "Enter protein sequences in FASTA format:",
-                     placeholder=">sp|P00533|EGFR_HUMAN\nMRPSGTAGAALLALLAALCPASRALEEKEGKLA...",
-                     height=150
-                 )
-                 proteins = parse_fasta_sequences(fasta_text)
-                 
-                 # Demo data for proteins
-                 st.markdown("**🎯 Demo Data for Judging:**")
-                 demo_proteins = """>sp|P00533|EGFR_HUMAN
+            # Better column layout with proper spacing and alignment
+            st.markdown("### 📝 Data Input")
+            
+            # Create two equal columns with proper gap
+            col1, col2 = st.columns([1, 1], gap="large")
+            
+            with col1:
+                # Protein section with consistent spacing
+                st.markdown("#### 🧬 Protein FASTA Sequences")
+                st.info("💡 **Tip**: Insert any protein - the model will automatically test it against all molecules")
+                
+                fasta_text = st.text_area(
+                    "Enter protein sequences in FASTA format:",
+                    placeholder=">sp|P00533|EGFR_HUMAN\nMRPSGTAGAALLALLAALCPASRALEEKEGKLA...",
+                    height=120,
+                    help="Paste your protein sequences in FASTA format",
+                    key="protein_input"
+                )
+                proteins = parse_fasta_sequences(fasta_text)
+                
+                # Add consistent spacing
+                st.markdown("")
+                
+                # Demo data for proteins with clear labels
+                st.markdown("#### 🎯 Demo Data for Judges")
+                st.markdown("**Copy and paste this formatted demo protein data:**")
+                
+                demo_proteins = """protein1:
+>EGFR_HUMAN|Epidermal Growth Factor Receptor
 MRPSGTAGAALLALLAALCPASRALEEKEGKLAKETLQALLNATFGVYVISTAMVLSQLTGATLILHL
 IHSNLKPEDVCTSGLYAVDALQHLYDFFRNRTALQEMIEQLKQLEEQVLESIVLVGSATFILLDIV
 VNKIVGNNCANPNAYEAGVELQTPDMAEYSFFTSVQYQVFKGSVTFTSEGGDTKKKKGLKADERP
 
-
->sp|P00519|ABL1_HUMAN
+protein2:
+>ABL1_HUMAN|Abelson Tyrosine-Protein Kinase
 MGSKGGGGKKKASLSPGQAAVEFAKKCLVGGLQPSQFEREARIEEAQERVQGPKEQWNLVAVVGMG
 TRSRSRRWSPGSDIYKKTVQGDGGFKSETTKESKPANKVYTLSLKKGVLVSFGQGQKPVNTKTSPK
 
-
->sp|P04626|ERBB2_HUMAN
+protein3:
+>ERBB2_HUMAN|Receptor Tyrosine-Protein Kinase erbB-2
 MKAIFTCLVGALAGLVLTSWGPPGSAAAQPTIPQLHAPVPAGQAQHHEQEVSRQPSWCFSYGLDD
 EHSMNQYNILSNDTAFYVNQKSITVIVCCEKTTLNQRGGLTLPVSRLSLAMTCWGGIKDJKGSAHF
 VRDAMLQYITSSQPFTAFRKILGSALQHQVPHIAIPQPITVQSVPLYKLDKKVITSQKSISLSFHS"""
-                 
-                 st.text_area(
-                     "Copy and paste this demo protein data:",
-                     value=demo_proteins,
-                     height=120,
-                     key="demo_proteins"
-                 )
-             
-             with col2:
-                 st.markdown("#### Molecule SMILES")
-                 smiles_text = st.text_area(
-                     "Enter SMILES strings (one per line):",
-                     placeholder="CCO\nCC(=O)OC1=CC=CC=C1C(=O)O\nC1CCCCC1",
-                     height=150
-                 )
-                 smiles = parse_smiles_list(smiles_text)
-                 
-                 # Demo data for molecules
-                 st.markdown("**🎯 Demo Data for Judging:**")
-                 demo_smiles = """CCO
+                
+                st.text_area(
+                    "Demo protein sequences:",
+                    value=demo_proteins,
+                    height=140,
+                    key="demo_proteins",
+                    help="This demo data includes 3 well-known protein targets with clear labels"
+                )
+            
+            with col2:
+                # Molecule section with consistent spacing
+                st.markdown("#### ⚗️ Molecule SMILES")
+                st.info("💡 **Tip**: Enter one SMILES string per line")
+                
+                smiles_text = st.text_area(
+                    "Enter SMILES strings (one per line):",
+                    placeholder="CCO\nCC(=O)OC1=CC=CC=C1C(=O)O\nC1CCCCC1",
+                    height=120,
+                    help="Paste your molecule SMILES strings, one per line",
+                    key="smiles_input"
+                )
+                smiles = parse_smiles_list(smiles_text)
+                
+                # Add consistent spacing
+                st.markdown("")
+                
+                # Demo data for molecules
+                st.markdown("#### 🎯 Demo Data for Judges")
+                st.markdown("**Copy and paste this demo molecule data:**")
+                
+                demo_smiles = """CCO
 CC(=O)OC1=CC=CC=C1C(=O)O
 c1ccccc1
 CN1CCCC1C2=CN=CC=C2
 CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
-                 
-                 st.text_area(
-                     "Copy and paste this demo molecule data:",
-                     value=demo_smiles,
-                     height=120,
-                     key="demo_smiles"
-                 )
+                
+                st.text_area(
+                    "Demo molecule SMILES:",
+                    value=demo_smiles,
+                    height=140,
+                    key="demo_smiles",
+                    help="This demo data includes 5 diverse drug-like molecules"
+                )
         
         else:  # CSV Upload
             uploaded_file = st.file_uploader(
@@ -415,69 +445,111 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                 except Exception as e:
                     st.error(f"Error reading CSV: {e}")
         
-        # Parameters
-        st.markdown("### Parameters")
-        col1, col2, col3, col4 = st.columns(4)
+        # Parameters section with better layout
+        st.markdown("### ⚙️ Prediction Parameters")
+        st.markdown("---")
+        
+        # Main parameters in a grid
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
         
         with col1:
-            n_samples = st.slider("MC Dropout Samples", 10, 100, 30)
-        with col2:
-            confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.0, 0.1)
-        with col3:
-            min_pKd = st.slider("Minimum pKd", 0.0, 15.0, 0.0, 0.5)
-        with col4:
-            top_k = st.slider("Top K Fingerprint Bits", 5, 50, 20)
+            n_samples = st.slider(
+                "MC Dropout Samples", 
+                10, 100, 30,
+                help="Number of Monte Carlo samples for uncertainty estimation"
+            )
         
-        # Additional options
-        make_highlights = st.checkbox("Generate Substructure Highlights", value=True)
+        with col2:
+            confidence_threshold = st.slider(
+                "Confidence Threshold", 
+                0.0, 1.0, 0.0, 0.1,
+                help="Minimum confidence score to include results"
+            )
+        
+        with col3:
+            min_pKd = st.slider(
+                "Minimum pKd", 
+                0.0, 15.0, 0.0, 0.5,
+                help="Minimum binding affinity threshold"
+            )
+        
+        with col4:
+            top_k = st.slider(
+                "Top K Fingerprint Bits", 
+                5, 50, 20,
+                help="Number of important fingerprint bits to analyze"
+            )
+        
+        # Additional options in a separate row
+        st.markdown("#### 🔧 Additional Options")
+        col1, col2 = st.columns(2, gap="large")
+        
+        with col1:
+            make_highlights = st.checkbox(
+                "Generate Substructure Highlights", 
+                value=True,
+                help="Create visual molecular structure highlights"
+            )
+        
+        with col2:
+            st.info("💡 **Model**: Using pre-trained binding affinity predictor")
         
         # Hidden model path (using default)
         model_path = "models/saved_models/binding_model.pt"
         
-        # Prediction button
-        if st.button("🔬 Predict & Rank", type="primary"):
-            if not proteins or not smiles:
-                st.error("Please provide both protein sequences and SMILES strings")
-            else:
-                # Validate SMILES
-                invalid_smiles = [s for s in smiles if not validate_smiles(s)]
-                if invalid_smiles:
-                    st.warning(f"Invalid SMILES found: {invalid_smiles[:3]}...")
-                
-                # Broadcast proteins to molecules if counts differ
-                if len(proteins) != len(smiles):
-                    if len(proteins) == 1:
-                        proteins = proteins * len(smiles)
-                    elif len(smiles) == 1:
-                        smiles = smiles * len(proteins)
-                    else:
-                        st.error("Number of proteins and molecules must match or one must be 1")
-                        return
-                
-                # Run prediction
-                with st.spinner("Running prediction pipeline..."):
-                    try:
-                        results = run_cached_pipeline(
-                            proteins=proteins,
-                            smiles=smiles,
-                            n_samples=n_samples,
-                            top_k=top_k,
-                            make_highlights=make_highlights,
-                            model_path=model_path
-                        )
-                        
-                        st.session_state.results = results
-                        st.success("Prediction completed successfully!")
-                        
-                    except Exception as e:
-                        st.error(f"Prediction failed: {e}")
+        # Prediction button with better styling
+        st.markdown("### 🚀 Run Prediction")
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🔬 Predict & Rank", type="primary", use_container_width=True):
+                if not proteins or not smiles:
+                    st.error("❌ Please provide both protein sequences and SMILES strings")
+                else:
+                    # Validate SMILES
+                    invalid_smiles = [s for s in smiles if not validate_smiles(s)]
+                    if invalid_smiles:
+                        st.warning(f"Invalid SMILES found: {invalid_smiles[:3]}...")
+                    
+                    # Broadcast proteins to molecules if counts differ
+                    if len(proteins) != len(smiles):
+                        if len(proteins) == 1:
+                            proteins = proteins * len(smiles)
+                        elif len(smiles) == 1:
+                            smiles = smiles * len(proteins)
+                        else:
+                            st.error("Number of proteins and molecules must match or one must be 1")
+                            return
+                    
+                    # Run prediction
+                    with st.spinner("Running prediction pipeline..."):
+                        try:
+                            results = run_cached_pipeline(
+                                proteins=proteins,
+                                smiles=smiles,
+                                n_samples=n_samples,
+                                top_k=top_k,
+                                make_highlights=make_highlights,
+                                model_path=model_path
+                            )
+                            
+                            st.session_state.results = results
+                            st.success("✅ Prediction completed successfully!")
+                            
+                        except Exception as e:
+                            st.error(f"❌ Prediction failed: {e}")
         
         # Display results if available
         if 'results' in st.session_state:
             results = st.session_state.results
             
+            # Results section with better styling
+            st.markdown("### 📊 Prediction Results")
+            st.markdown("---")
+            
             # Summary metrics
-            st.markdown("### Results Summary")
+            st.markdown("#### 📈 Summary Metrics")
             display_metrics_summary(results['summary_metrics'])
             
             # Filtered results
@@ -508,7 +580,7 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                                 'Kd (nM)', 'ΔG (kcal/mol)', 'Phase 1 Score', 'Protein']
             
             # Format numeric columns
-            st.markdown("### Ranked Results")
+            st.markdown("#### 🏆 Ranked Results")
             st.dataframe(
                 df_display,
                 column_config={
@@ -519,11 +591,14 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                     "Kd (nM)": st.column_config.NumberColumn("Kd (nM)", format="%.1f"),
                     "ΔG (kcal/mol)": st.column_config.NumberColumn("ΔG (kcal/mol)", format="%.1f"),
                     "Phase 1 Score": st.column_config.NumberColumn("Phase 1 Score", format="%.3f"),
-                }
+                },
+                use_container_width=True
             )
             
-            # Download buttons
-            col1, col2 = st.columns(2)
+            
+            # Download section
+            st.markdown("#### 💾 Download Results")
+            col1, col2 = st.columns(2, gap="large")
             
             with col1:
                 csv_data = df_display.to_csv(index=False)
@@ -531,7 +606,8 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                     label="📥 Download Results (CSV)",
                     data=csv_data,
                     file_name="binding_predictions.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    use_container_width=True
                 )
             
             with col2:
@@ -540,7 +616,8 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                     label="📥 Download Results (JSON)",
                     data=json_data,
                     file_name="binding_predictions.json",
-                    mime="application/json"
+                    mime="application/json",
+                    use_container_width=True
                 )
     
     # TAB 3: DETAILED OVERVIEW
@@ -762,16 +839,58 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
             - 🔬 Drug development recommendations
             """)
             
-            # Number of molecules to analyze
-            num_molecules = st.slider(
-                "Select number of top molecules to analyze:",
-                min_value=1,
-                max_value=min(10, len(df)),
-                value=min(3, len(df)),
-                help="AI will analyze the top N molecules ranked by binding affinity"
-            )
+            # Molecule Selection for AI Analysis
+            st.markdown("### Select Molecules for AI Analysis")
             
-            if st.button("✨ Generate AI Insights with Molecular Images", type="primary", use_container_width=True):
+            # Create molecule options with SMILES and key metrics
+            molecule_options = []
+            for idx, row in df.iterrows():
+                molecule_name = f"Rank {idx+1}: {row['smiles'][:30]}{'...' if len(row['smiles']) > 30 else ''}"
+                molecule_info = f"pKd: {row['mean_pKd']:.2f} | Confidence: {row['confidence']:.3f} | Phase 1: {row['phase1_readiness']:.3f}"
+                molecule_options.append((molecule_name, molecule_info, row['smiles'], idx))
+            
+            # Create checkboxes for molecule selection
+            selected_molecules = []
+            cols = st.columns(2)  # Two columns for better layout
+            
+            for i, (name, info, smiles, idx) in enumerate(molecule_options):
+                with cols[i % 2]:
+                    if st.checkbox(f"**{name}**", key=f"ai_molecule_{i}"):
+                        selected_molecules.append({
+                            'name': name,
+                            'info': info,
+                            'smiles': smiles,
+                            'index': idx,
+                            'rank': idx + 1,
+                            'pkd': df.iloc[idx]['mean_pKd'],
+                            'confidence': df.iloc[idx]['confidence'],
+                            'phase1': df.iloc[idx]['phase1_readiness']
+                        })
+            
+            # Display selected molecules summary
+            if selected_molecules:
+                st.markdown("#### Selected Molecules for AI Analysis")
+                selected_df = pd.DataFrame(selected_molecules)
+                st.dataframe(
+                    selected_df[['rank', 'smiles', 'pkd', 'confidence', 'phase1']],
+                    column_config={
+                        "rank": st.column_config.NumberColumn("Rank", width="small"),
+                        "smiles": st.column_config.TextColumn("SMILES"),
+                        "pkd": st.column_config.NumberColumn("pKd", format="%.2f"),
+                        "confidence": st.column_config.NumberColumn("Confidence", format="%.3f"),
+                        "phase1": st.column_config.NumberColumn("Phase 1 Score", format="%.3f"),
+                    },
+                    hide_index=True
+                )
+                
+                # Store selected molecules in session state
+                st.session_state.selected_molecules = selected_molecules
+                num_molecules = len(selected_molecules)
+            else:
+                st.warning("Please select at least one molecule for AI analysis.")
+                num_molecules = 0
+            
+            if num_molecules > 0 and st.button("✨ Generate AI Insights with Molecular Images", type="primary", use_container_width=True):
                 with st.spinner(f"🤖 Generating AI insights for top {num_molecules} molecules... (30-60 seconds)"):
                     try:
                         # Initialize Gemini client
@@ -781,25 +900,28 @@ CC1=CC=CC=C1NC(=O)NC2=CC(=CC=C2)N3CCN(CC3)C4=NC=NC=N4"""
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         
-                        for idx, row in df.head(num_molecules).iterrows():
-                            status_text.text(f"Analyzing molecule {idx + 1}/{num_molecules}...")
+                        for i, selected_mol in enumerate(selected_molecules):
+                            status_text.text(f"Analyzing molecule {i + 1}/{num_molecules}...")
+                            
+                            # Get the full row data for the selected molecule
+                            row = df.iloc[selected_mol['index']]
                             
                             insights = gemini_client.generate_molecular_insights(
-                                smiles=row['smiles'],
+                                smiles=selected_mol['smiles'],
                                 protein_target=row.get('protein', 'Unknown'),
-                                binding_pkd=row['mean_pKd'],
-                                phase1_score=row['phase1_readiness'],
-                                confidence=row['confidence'],
+                                binding_pkd=selected_mol['pkd'],
+                                phase1_score=selected_mol['phase1'],
+                                confidence=selected_mol['confidence'],
                                 kd_nm=row['Kd_nM'],
                                 delta_g=row['DeltaG_kcal_mol']
                             )
-                            insights['smiles'] = row['smiles']
-                            insights['rank'] = idx + 1
-                            insights['pKd'] = row['mean_pKd']
-                            insights['confidence'] = row['confidence']
+                            insights['smiles'] = selected_mol['smiles']
+                            insights['rank'] = selected_mol['rank']
+                            insights['pKd'] = selected_mol['pkd']
+                            insights['confidence'] = selected_mol['confidence']
                             insights_list.append(insights)
                             
-                            progress_bar.progress((idx + 1) / num_molecules)
+                            progress_bar.progress((i + 1) / num_molecules)
                         
                         status_text.empty()
                         st.session_state.gemini_insights = insights_list
