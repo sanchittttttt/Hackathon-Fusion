@@ -1,10 +1,18 @@
 from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem.Draw import SimilarityMaps
 from rdkit.Chem import rdMolDescriptors
-import matplotlib.pyplot as plt
-import os
+import numpy as np
 from pathlib import Path
+import os
+
+# Try to import drawing modules, but handle gracefully if they fail
+try:
+    from rdkit.Chem import Draw
+    from rdkit.Chem.Draw import SimilarityMaps
+    import matplotlib.pyplot as plt
+    DRAWING_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Molecular drawing not available: {e}")
+    DRAWING_AVAILABLE = False
 
 
 def highlight_important_substructures(smiles, important_bits, output_path=None, radius=2):
@@ -18,8 +26,12 @@ def highlight_important_substructures(smiles, important_bits, output_path=None, 
         radius (int): Radius used for Morgan fingerprint generation.
         
     Returns:
-        str: Path to the saved highlighted image.
+        str: Path to the saved highlighted image, or None if drawing is not available.
     """
+    if not DRAWING_AVAILABLE:
+        print("Warning: Molecular drawing not available on this system. Skipping highlight generation.")
+        return None
+    
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("Invalid SMILES string")
@@ -56,15 +68,19 @@ def highlight_important_substructures(smiles, important_bits, output_path=None, 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    drawer = Draw.MolDraw2DCairo(500, 300)
-    drawer.DrawMolecule(mol, highlightAtoms=highlight_atoms, highlightBonds=highlight_bonds)
-    drawer.FinishDrawing()
-    img = drawer.GetDrawingText()
-    
-    with open(output_path, "wb") as f:
-        f.write(img)
-    
-    return str(output_path)
+    try:
+        drawer = Draw.MolDraw2DCairo(500, 300)
+        drawer.DrawMolecule(mol, highlightAtoms=highlight_atoms, highlightBonds=highlight_bonds)
+        drawer.FinishDrawing()
+        img = drawer.GetDrawingText()
+        
+        with open(output_path, "wb") as f:
+            f.write(img)
+        
+        return str(output_path)
+    except Exception as e:
+        print(f"Warning: Failed to generate molecular highlight: {e}")
+        return None
 
 
 # Example usage

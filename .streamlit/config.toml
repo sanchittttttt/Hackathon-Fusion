@@ -10,10 +10,12 @@ headless = true
 port = 8501
 enableCORS = false
 enableXsrfProtection = false
+# Disable file watching to prevent inotify errors on cloud
+fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false
 
 [runner]
-fastReruns = true
+fastReruns = false
 enforceSerializableSessionState = false

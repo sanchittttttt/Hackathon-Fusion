@@ -14,7 +14,6 @@ rdkit>=2023.3.0
 
 # Deep Learning and Transformers
 transformers>=4.30.0
-torch>=2.0.0
 
 # File Processing and Utilities
 pathlib2>=2.3.0

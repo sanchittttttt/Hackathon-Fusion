@@ -55,7 +55,21 @@ For sensitive data, use Streamlit's secrets management:
 - Download model during app startup
 - More complex but better for large models
 
-### 5. Performance Optimization
+### 5. Cloud Deployment Fixes
+
+**Important**: The app has been configured to handle common cloud deployment issues:
+
+#### RDKit Drawing Issues
+- The app gracefully handles missing system libraries for molecular drawing
+- If drawing fails, the app continues without molecular highlights
+- No crashes due to missing `libXrender.so.1` or similar libraries
+
+#### File Watching Issues
+- Disabled file watching in `.streamlit/config.toml` to prevent inotify errors
+- Set `fileWatcherType = "none"` and `fastReruns = false`
+- This prevents the "inotify watch limit reached" errors
+
+### 6. Performance Optimization
 
 #### Caching
 Your app already uses `@st.cache_data` for:
@@ -67,7 +81,7 @@ Your app already uses `@st.cache_data` for:
 - Your app is optimized for this limit
 - Consider reducing `n_samples` for very large datasets
 
-### 6. Troubleshooting
+### 7. Troubleshooting
 
 #### Common Issues:
 
@@ -90,7 +104,7 @@ Your app already uses `@st.cache_data` for:
    - Optimize model loading
    - Consider lazy loading
 
-### 7. Monitoring
+### 8. Monitoring
 
 Streamlit Cloud provides:
 - App usage statistics
@@ -99,7 +113,7 @@ Streamlit Cloud provides:
 
 Access these in your app dashboard.
 
-### 8. Updates
+### 9. Updates
 
 To update your deployed app:
 1. Push changes to your GitHub repository
